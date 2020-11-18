@@ -7,8 +7,8 @@ Version: 2.0
 """
 
 import discord, asyncio, os, platform, sys
-from discord.ext.commands import Bot
-from discord.ext import commands
+from discord.ext import commands, tasks
+from itertools import cycle
 if not os.path.isfile("config.py"):
 	sys.exit("'config.py' not found! Please add it and try again.")
 else:
@@ -20,11 +20,11 @@ For more information about intents, please go to the following websites:
 https://discordpy.readthedocs.io/en/latest/intents.html
 https://discordpy.readthedocs.io/en/latest/intents.html#privileged-intents
 """
-intents = discord.Intents().default()
+
+"""
+Defualt Intents:
 intents.messages = True
 intents.reactions = True
-intents.presences = True
-intents.members = True
 intents.guilds = True
 intents.emojis = True
 intents.bans = True
@@ -39,8 +39,15 @@ intents.integrations = True
 intents.invites = True
 intents.voice_states = False
 intents.webhooks = False
-	
-bot = Bot(command_prefix=config.BOT_PREFIX, intents=intents)
+
+Privleged Intents (Needs to be enabled on dev page):
+intents.presences = True
+intents.members = True
+"""
+intents = discord.Intents.default()
+
+# Making the owner acutal owners of the bot
+bot = commands.Bot(command_prefix=config.BOT_PREFIX, intents=intents, owner_ids=config.OWNERS)
 
 # The code in this even is executed when the bot is ready
 @bot.event
@@ -52,18 +59,18 @@ async def on_ready():
 	print(f"Running on: {platform.system()} {platform.release()} ({os.name})")
 	print("-------------------")
 
-# Setup the game status task of the bot
+@tasks.loop(seconds=60)
 async def status_task():
-	while True:
-		await bot.change_presence(activity=discord.Game("with you!"))
-		await asyncio.sleep(60)
-		await bot.change_presence(activity=discord.Game("with Krypton!"))
-		await asyncio.sleep(60)
-		await bot.change_presence(activity=discord.Game(f"{config.BOT_PREFIX} help"))
-		await asyncio.sleep(60)
-		await bot.change_presence(activity=discord.Game("with humans!"))
-		await asyncio.sleep(60)
+	aciticty = ["with you!", "with Krypton!", f"{config.BOT_PREFIX} help", "with humans!"]
+	actv_list = cycle(acitictys)
+	
+	async def next_actv():
+		return next(actv_list)
+	
+	aciticty = next_actv()
+	await bot.change_presence(activity=discord.Game(aciticty))
 
+		
 # Removes the default help command of discord.py to be able to create our custom help command.
 bot.remove_command("help")
 
